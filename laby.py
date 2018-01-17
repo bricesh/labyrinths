@@ -1,7 +1,7 @@
 from random import randint
 
 # Load file and remove linefeed characters
-with open('labys/laby1.txt', 'r') as f:
+with open('maps/laby1.txt', 'r') as f:
     laby = [line.replace('\n', '').split(',') for line in f]
 
 # Remove linefeed characters
@@ -68,7 +68,7 @@ for game in range(0, 100000):
 
     # Write to file if number of steps at most 300
     if len(path) <= 300:
-        f = open("labys/saved_games_test.txt","a")
+        f = open("games/saved_games_test.txt","a")
         f.write(str(path))
         f.write("\n")
         f.close()
