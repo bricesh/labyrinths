@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 import copy
 
 # Load labyrinth file and remove linefeed characters
-with open('labys/laby1.txt', 'r') as f:
+with open('maps/laby1.txt', 'r') as f:
     laby = [line.replace('\n', '').split(',') for line in f]
 
 # Set values to int
@@ -13,7 +13,7 @@ for i in range(0, len(laby)):
         laby[i][j] = int(laby[i][j])
 
 # Load game file
-with open('labys/shortest_game.txt', 'r') as f:
+with open('games/shortest_game.txt', 'r') as f:
     paths = [line.replace('\n', '').split(',') for line in f]
 
 num_list = []
