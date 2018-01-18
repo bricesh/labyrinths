@@ -7,7 +7,7 @@ random_count = 0
 decision_count = 0
 
 # Load file and remove linefeed characters
-with open('labys/laby1.txt', 'r') as f:
+with open('maps/laby1.txt', 'r') as f:
     laby = [line.replace('\n', '').split(',') for line in f]
 
 # Remove linefeed characters
@@ -92,7 +92,7 @@ for game in range(0, 2):
 
     # Write to file if number of steps at most ...
     if len(path) <= 5000:
-        f = open("labys/saved_games_rf.txt", "a")
+        f = open("games/saved_games_rf.txt", "a")
         f.write(str(path))
         f.write("\n")
         f.close()
