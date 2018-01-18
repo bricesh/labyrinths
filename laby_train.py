@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 
 # Load file
-with open('labys/saved_games_small_rdm.txt', 'r') as f:
+with open('games/saved_games_small_rdm.txt', 'r') as f:
     paths = [line.replace('\n', '').split(',') for line in f]
 
 num_list = []
