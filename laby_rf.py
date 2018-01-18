@@ -2,12 +2,12 @@ from random import randint
 import pickle
 import numpy as np
 
-rf_clf = pickle.load(open( "rf_clf.p", "rb" ))
+rf_clf = pickle.load(open( "rf_clf_with_prexy.p", "rb" ))
 random_count = 0
 decision_count = 0
 
 # Load file and remove linefeed characters
-with open('labys/laby4.txt', 'r') as f:
+with open('labys/laby1.txt', 'r') as f:
     laby = [line.replace('\n', '').split(',') for line in f]
 
 # Remove linefeed characters
@@ -28,22 +28,25 @@ for i in range(0, len(laby)):
         continue
 
 # Play 100000 games
-for game in range(0, 400):
+for game in range(0, 2):
     x_agent = x_entrance
     y_agent = y_entrance
+    x_prev = x_agent
+    y_prev = y_agent
 
     # Define the path variable. Each cell is a tuple (x_pos, y_pos, up_val, down_val, left_val, right_val)
     path = []
 
     # Add entrance cell
-    path.append((x_agent, y_agent, 9, 9, 9, 0, 3))
+    path.append((x_agent, y_agent, 9, 9, 9, 0, x_prev, y_prev, 3))
 
     exit_not_found = True
     while exit_not_found:
         decision_count += 1
         # Pick a step randomly from available directions
         random_decision = False
-        dir_choice = rf_clf.predict(np.array(np.array(path[-1][0:6])).reshape(1, -1))[0]
+        dir_choice = rf_clf.predict(np.array(np.array(path[-1][0:8])).reshape(1, -1))[0]
+
         wall = True
         while wall:
             if path[-1][dir_choice+2]==0:
@@ -52,8 +55,13 @@ for game in range(0, 400):
                 dir_choice = randint(0, 3)
                 random_decision = True
 
+        print rf_clf.predict_proba(np.array(np.array(path[-1][0:8])).reshape(1, -1)), random_decision
+
         if random_decision:
             random_count += 1
+
+        x_prev = x_agent
+        y_prev = y_agent
 
         if dir_choice==0:
             y_agent -= 1
@@ -75,13 +83,15 @@ for game in range(0, 400):
                      laby[y_agent+1][x_agent],
                      laby[y_agent][x_agent-1],
                      laby[y_agent][x_agent+1],
+                     x_prev,
+                     y_prev,
                      dir_choice))
 
-        if (2 in path[-1][2:6]) or (len(path) > 402):
+        if (2 in path[-1][2:6]) or (len(path) > 5001):
             exit_not_found = False
 
     # Write to file if number of steps at most ...
-    if len(path) <= 400:
+    if len(path) <= 5000:
         f = open("labys/saved_games_rf.txt", "a")
         f.write(str(path))
         f.write("\n")
