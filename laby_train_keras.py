@@ -4,11 +4,16 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+def indices_to_one_hot(data, nb_classes):
+    """Convert an iterable of indices to one-hot encoded labels."""
+    targets = np.array(data).reshape(-1)
+    return np.eye(nb_classes).astype(int)[targets]
+
 # fix random seed for reproducibility
 np.random.seed(163)
 
 # Load file
-with open('labys/saved_games_small_rdm.txt', 'r') as f:
+with open('games/saved_games_small_rdm.txt', 'r') as f:
     paths = [line.replace('\n', '').split(',') for line in f]
 
 num_list = []
@@ -32,21 +37,20 @@ training_action["direction"].value_counts() # Could improve the class balance...
 
 train_x, test_x, train_y, test_y = train_test_split(training_features,
                                                     training_action,
-                                                    train_size=.7)
+                                                    train_size=.5)
 
 # AI
 # create model
 model = Sequential()
-model.add(Dense(256, input_dim=8, activation='relu'))
-model.add(Dense(64, activation='relu'))
+model.add(Dense(32, input_dim=8, activation='relu'))
+model.add(Dense(8, activation='relu'))
 model.add(Dense(4, activation='sigmoid'))
 
 # Compile model
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # Fit the model
-model.fit(train_x, train_y, epochs=500, batch_size=120)
+model.fit(np.array(train_x), indices_to_one_hot(train_y,4), epochs=5, batch_size=200)
 
-# evaluate the model
-scores = model.evaluate(test_x, test_y)
+scores = model.evaluate(np.array(test_x), indices_to_one_hot(test_y,4))
 print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
