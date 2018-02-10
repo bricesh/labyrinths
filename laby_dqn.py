@@ -13,7 +13,7 @@ class Env:
         self._find_entrance()
 
     def _load_map(self, map_name):
-        with open('labys/' + map_name + '.txt', 'r') as f:
+        with open('maps/' + map_name + '.txt', 'r') as f:
             self.laby = [line.replace('\n', '').split(',') for line in f]
         for i in range(0, len(self.laby)):
             for j in range(0, len(self.laby)):
