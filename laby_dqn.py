@@ -40,14 +40,14 @@ class DQNAgent:
         self.epsilon_decay = 0.99
         self.learning_rate = 0.001
 
-    #def _huber_loss(self, target, prediction):
+    def _huber_loss(self, target, prediction):
         # sqrt(1+error^2)-1
-    #    error = prediction - target
-    #    return K.mean(K.sqrt(1 + K.square(error)) - 1, axis=-1)
+        error = prediction - target
+        return K.mean(K.sqrt(1 + K.square(error)) - 1, axis=-1)
 
 
 if __name__ == "__main__":
     laby_env = Env("laby1")
-    print laby_env.x_entrance, laby_env.y_entrance
-    print laby_env.laby
+    print(laby_env.x_entrance, laby_env.y_entrance)
+    print(laby_env.laby)
     agent = DQNAgent(4,4)
