@@ -51,3 +51,4 @@ if __name__ == "__main__":
     print(laby_env.x_entrance, laby_env.y_entrance)
     print(laby_env.laby)
     agent = DQNAgent(4,4)
+    print(agent.gamma)
