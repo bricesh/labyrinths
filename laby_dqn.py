@@ -72,20 +72,18 @@ class DQNAgent:
         self.memory.append((state, action, reward, next_state, done))
 
     def init_Q(self):
-        with open('./maps/init_Q.txt', 'r') as f:
+        with open('./models/init_Q.txt', 'r') as f:
             init_Q = [line.replace('\n', '').split(',') for line in f]
 
         init_Q = np.array(init_Q).astype(np.float)
 
         self.model.fit(init_Q[:,0:4].astype(np.int), init_Q[:,4:8], epochs=1000, verbose=0)
-
         self.update_target_model()
-
-        predicted_Q = self.target_model.predict(init_Q[:,0:4].astype(np.int))
-        np.set_printoptions(precision=3, suppress=True)
-        print(predicted_Q)
-        print(init_Q[:,4:8])
         self.save("./models/model_after_Q_init.h5")
+        #predicted_Q = self.target_model.predict(init_Q[:,0:4].astype(np.int))
+        #np.set_printoptions(precision=3, suppress=True)
+        #print(predicted_Q)
+        #print(init_Q[:,4:8])
 
 #    def move(self,dir_choice):
 #        if dir_choice==0:
