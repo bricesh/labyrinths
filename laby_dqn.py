@@ -97,8 +97,22 @@ class DQNAgent:
 #        else:
 #            print("I'm stuck")
 
+    def act(self, state):
+        if np.random.rand() <= self.epsilon:
+            dir_choice = random.randrange(self.action_size)
+        else:
+            dir_choice = np.argmax(self.model.predict(state)[0])
+            wall = True
+            while wall:
+                if state[dir_choice] == 0:
+                    wall = False
+                else:
+                    dir_choice = random.randrange(self.action_size)
+        return dir_choice  # returns action
+
     def load(self, name):
         self.model.load_weights(name)
+        self.target_model.load_weights(name)
 
     def save(self, name):
         self.model.save_weights(name)
@@ -106,8 +120,18 @@ class DQNAgent:
 
 if __name__ == "__main__":
     laby_env = Env("laby1")
+    print("Entrance Coordinates")
     print(laby_env.x_entrance, laby_env.y_entrance)
+    
     cur_state = laby_env.get_state(laby_env.x_entrance+2, laby_env.y_entrance)
     print(cur_state)
+    
     agent = DQNAgent(4,4)
-    agent.init_Q()
+    agent.load("./models/model_after_Q_init.h5")
+    print("Check Q is initialised")
+    print(agent.predict([9, 9, 9, 0]))
+    print(agent.predict([9, 0, 9, 0]))
+    print(agent.predict([0, 0, 9, 0]))
+    print(agent.predict([0, 0, 0, 0]))
+    
+    #agent.init_Q()
