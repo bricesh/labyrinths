@@ -102,12 +102,14 @@ class DQNAgent:
             dir_choice = random.randrange(self.action_size)
         else:
             dir_choice = np.argmax(self.model.predict(state)[0])
-            wall = True
-            while wall:
-                if state[dir_choice] == 0:
-                    wall = False
-                else:
-                    dir_choice = random.randrange(self.action_size)
+
+        wall = True
+        while wall:
+            if state[0][dir_choice] == 0:
+                wall = False
+            else:
+                dir_choice = random.randrange(self.action_size)
+
         return dir_choice  # returns action
 
     def load(self, name):
@@ -122,16 +124,23 @@ if __name__ == "__main__":
     laby_env = Env("laby1")
     print("Entrance Coordinates")
     print(laby_env.x_entrance, laby_env.y_entrance)
-    
+
     cur_state = laby_env.get_state(laby_env.x_entrance+2, laby_env.y_entrance)
     print(cur_state)
-    
+
     agent = DQNAgent(4,4)
-    agent.load("./models/model_after_Q_init.h5")
-    print("Check Q is initialised")
-    print(agent.predict([9, 9, 9, 0]))
-    print(agent.predict([9, 0, 9, 0]))
-    print(agent.predict([0, 0, 9, 0]))
-    print(agent.predict([0, 0, 0, 0]))
-    
     #agent.init_Q()
+    agent.load("./models/model_after_Q_init.h5")
+
+    np.set_printoptions(precision=3, suppress=True)
+    print("Check Q is initialised")
+    print(agent.target_model.predict(np.reshape([9, 9, 9, 0], [1, agent.state_size])))
+    print(agent.target_model.predict(np.reshape([9, 0, 9, 0], [1, agent.state_size])))
+    print(agent.target_model.predict(np.reshape([0, 0, 9, 0], [1, agent.state_size])))
+    print(agent.target_model.predict(np.reshape([0, 0, 0, 0], [1, agent.state_size])))
+
+    print("try some moves...")
+    print(agent.act(np.reshape([9, 9, 9, 0], [1, agent.state_size])))
+    print(agent.act(np.reshape([9, 0, 9, 0], [1, agent.state_size])))
+    print(agent.act(np.reshape([0, 0, 9, 0], [1, agent.state_size])))
+    print(agent.act(np.reshape([0, 0, 0, 0], [1, agent.state_size])))
