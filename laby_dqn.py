@@ -13,8 +13,9 @@ class Env:
         self._find_entrance()
 
     def _load_map(self, map_name):
-        with open('maps/' + map_name + '.txt', 'r') as f:
+        with open('./maps/' + map_name + '.txt', 'r') as f:
             self.laby = [line.replace('\n', '').split(',') for line in f]
+
         for i in range(0, len(self.laby)):
             for j in range(0, len(self.laby)):
                 self.laby[i][j] = int(self.laby[i][j])
@@ -26,6 +27,12 @@ class Env:
                 self.y_entrance = i
             except ValueError:
                 continue
+
+    def get_state(self, x_pos, y_pos):
+        return self.laby[y_pos - 1][x_pos],\
+               self.laby[y_pos + 1][x_pos],\
+               9 if self.laby[y_pos][x_pos - 1] == 1 else self.laby[y_pos][x_pos - 1],\
+               self.laby[y_pos][x_pos + 1]
 
 
 class DQNAgent:
@@ -39,16 +46,65 @@ class DQNAgent:
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.99
         self.learning_rate = 0.001
+        self.model = self._build_model()
+        self.target_model = self._build_model()
+
+    def _build_model(self):
+        # Neural Net for Deep-Q learning Model
+        model = Sequential()
+        model.add(Dense(24, input_dim=self.state_size, activation='relu'))
+        model.add(Dense(24, activation='relu'))
+        model.add(Dense(self.action_size, activation='linear'))
+        model.compile(loss=self._huber_loss,
+                      optimizer=Adam(lr=self.learning_rate))
+        return model
 
     def _huber_loss(self, target, prediction):
         # sqrt(1+error^2)-1
         error = prediction - target
         return K.mean(K.sqrt(1 + K.square(error)) - 1, axis=-1)
 
+    def update_target_model(self):
+        # copy weights from model to target_model
+        self.target_model.set_weights(self.model.get_weights())
+
+    def remember(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
+
+    def init_Q(self):
+        with open('./maps/init_Q.txt', 'r') as f:
+            init_Q = [line.replace('\n', '').split(',') for line in f]
+
+        init_Q = np.array(init_Q).astype(np.float)
+
+        self.model.fit(init_Q[:,0:4].astype(np.int), init_Q[:,4:8], epochs=1, verbose=0)
+
+        self.update_target_model()
+        self.save("./models/model_after_Q_init.h5")
+
+#    def move(self,dir_choice):
+#        if dir_choice==0:
+#            y_agent -= 1
+#        elif dir_choice==1:
+#            y_agent += 1
+#        elif dir_choice==2:
+#            x_agent -= 1
+#        elif dir_choice==3:
+#            x_agent += 1
+#        else:
+#            print("I'm stuck")
+
+    def load(self, name):
+        self.model.load_weights(name)
+
+    def save(self, name):
+        self.model.save_weights(name)
+
 
 if __name__ == "__main__":
     laby_env = Env("laby1")
     print(laby_env.x_entrance, laby_env.y_entrance)
-    print(laby_env.laby)
+    cur_state = laby_env.get_state(laby_env.x_entrance+2, laby_env.y_entrance)
+    print(cur_state)
     agent = DQNAgent(4,4)
-    print(agent.gamma)
+    agent.init_Q()
