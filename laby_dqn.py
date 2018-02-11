@@ -77,9 +77,14 @@ class DQNAgent:
 
         init_Q = np.array(init_Q).astype(np.float)
 
-        self.model.fit(init_Q[:,0:4].astype(np.int), init_Q[:,4:8], epochs=1, verbose=0)
+        self.model.fit(init_Q[:,0:4].astype(np.int), init_Q[:,4:8], epochs=1000, verbose=0)
 
         self.update_target_model()
+
+        predicted_Q = self.target_model.predict(init_Q[:,0:4].astype(np.int))
+        np.set_printoptions(precision=3, suppress=True)
+        print(predicted_Q)
+        print(init_Q[:,4:8])
         self.save("./models/model_after_Q_init.h5")
 
 #    def move(self,dir_choice):
