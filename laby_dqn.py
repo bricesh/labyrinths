@@ -6,6 +6,8 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras import backend as K
 
+EPISODES = 5000
+
 
 class Env:
     def __init__(self, map_name):
@@ -13,10 +15,11 @@ class Env:
         self.action_size = 4
         self._x_entrance = 0
         self._y_entrance = 0
+        self.cur_x_pos = 0
+        self.cur_y_pos = 0
         self._load_map(map_name)
         self._find_entrance()
-        self.cur_x_pos = self._x_entrance + 1 # assume entrance always on left wall
-        self.cur_y_pos = self._y_entrance
+        self.reset()
 
     def _load_map(self, map_name):
         # Import map from file
@@ -63,6 +66,11 @@ class Env:
 
         return state, reward, exit_found
 
+    def reset(self):
+        self.cur_x_pos = self._x_entrance + 1  # assume entrance always on left wall
+        self.cur_y_pos = self._y_entrance
+        return self.get_state()
+
 
 class DQNAgent:
     def __init__(self, state_size, action_size):
@@ -71,7 +79,7 @@ class DQNAgent:
         self.action_size = action_size
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95  # discount rate
-        self.epsilon = 1.0  # exploration rate
+        self.epsilon = 0.5  # exploration rate
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.99
         self.learning_rate = 0.001
@@ -162,25 +170,29 @@ if __name__ == "__main__":
     done = False
     batch_size = 64
 
-    cur_state = laby_env.get_state()
-    cur_state = np.reshape(cur_state, [1, agent.state_size])
-    print(cur_state)
+    for e in range(EPISODES):
+        # Define the path variable. Each cell is a tuple (x_pos, y_pos, up_val, down_val, left_val, right_val)
+        path = []
 
-    steps = 0
-    while not done:
-        steps += 1
-        action = agent.act(cur_state)
-        next_state, reward, done = laby_env.step(action)
-        next_state = np.reshape(next_state, [1, agent.state_size])
+        cur_state = laby_env.reset()
+        cur_state = np.reshape(cur_state, [1, agent.state_size])
+        print("episode: {}/{}".format(e, EPISODES))
 
-        agent.remember(cur_state, action, reward, next_state, done)
-        cur_state = next_state
+        steps = 0
+        while not done:
+            path.append((Env.cur_x_pos, Env.cur_y_pos))
+            steps += 1
+            action = agent.act(cur_state)
+            next_state, reward, done = laby_env.step(action)
+            next_state = np.reshape(next_state, [1, agent.state_size])
 
-        if steps > 300:
-            done = True
+            agent.remember(cur_state, action, reward, next_state, done)
+            cur_state = next_state
 
-    #print(len(agent.remember))
+            if steps > 300:
+                done = True
+
     f = open("games/saved_games_dqn.txt", "a")
-    f.write(str(agent.memory))
+    f.write(str(path))
     f.write("\n")
     f.close()
