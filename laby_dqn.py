@@ -140,7 +140,7 @@ class DQNAgent:
 if __name__ == "__main__":
     laby_env = Env("laby1")
     print("Entrance Coordinates")
-    print(laby_env.x_entrance, laby_env.y_entrance)
+    print(laby_env._x_entrance, laby_env._y_entrance)
 
     agent = DQNAgent(laby_env.state_size, laby_env.action_size)
     # agent.init_Q()
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     while not done:
         steps += 1
         action = agent.act(cur_state)
-        next_state, reward, done = Env.step(action)
+        next_state, reward, done = laby_env.step(action)
         next_state = np.reshape(next_state, [1, agent.state_size])
 
         agent.remember(cur_state, action, reward, next_state, done)
@@ -179,8 +179,8 @@ if __name__ == "__main__":
         if steps > 300:
             done = True
 
-    print(len(agent.remember))
+    #print(len(agent.remember))
     f = open("games/saved_games_dqn.txt", "a")
-    f.write(str(agent.remember))
+    f.write(str(agent.memory))
     f.write("\n")
     f.close()
