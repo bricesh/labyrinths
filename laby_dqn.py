@@ -9,13 +9,20 @@ from keras import backend as K
 
 class Env:
     def __init__(self, map_name):
+        self.state_size = 4
+        self.action_size = 4
+        self._x_entrance = 0
+        self._y_entrance = 0
         self._load_map(map_name)
         self._find_entrance()
+        self.cur_x_pos = self._x_entrance + 1 # assume entrance always on left wall
+        self.cur_y_pos = self._y_entrance
 
     def _load_map(self, map_name):
+        # Import map from file
         with open('./maps/' + map_name + '.txt', 'r') as f:
             self.laby = [line.replace('\n', '').split(',') for line in f]
-
+        # Set values to int
         for i in range(0, len(self.laby)):
             for j in range(0, len(self.laby)):
                 self.laby[i][j] = int(self.laby[i][j])
@@ -23,16 +30,38 @@ class Env:
     def _find_entrance(self):
         for i in range(0, len(self.laby)):
             try:
-                self.x_entrance = self.laby[i].index(1)
-                self.y_entrance = i
+                self._x_entrance = self.laby[i].index(1)
+                self._y_entrance = i
             except ValueError:
                 continue
 
-    def get_state(self, x_pos, y_pos):
-        return self.laby[y_pos - 1][x_pos],\
-               self.laby[y_pos + 1][x_pos],\
-               9 if self.laby[y_pos][x_pos - 1] == 1 else self.laby[y_pos][x_pos - 1],\
-               self.laby[y_pos][x_pos + 1]
+    def get_state(self):
+        return self.laby[self.cur_y_pos - 1][self.cur_x_pos],\
+               self.laby[self.cur_y_pos + 1][self.cur_x_pos],\
+               9 if self.laby[self.cur_y_pos][self.cur_x_pos - 1] == 1 else self.laby[self.cur_y_pos][self.cur_x_pos - 1],\
+               self.laby[self.cur_y_pos][self.cur_x_pos + 1]
+
+    def step(self, dir_choice):
+        if dir_choice == 0:
+            self.cur_y_pos -= 1
+        elif dir_choice == 1:
+            self.cur_y_pos += 1
+        elif dir_choice == 2:
+            self.cur_x_pos -= 1
+        elif dir_choice == 3:
+            self.cur_x_pos += 1
+        else:
+            print("I'm stuck")
+
+        state = self.get_state()
+
+        exit_found = False
+        reward = 0
+        if 2 in state:
+            exit_found = True
+            reward = 10
+
+        return state, reward, exit_found
 
 
 class DQNAgent:
@@ -85,18 +114,6 @@ class DQNAgent:
         #print(predicted_Q)
         #print(init_Q[:,4:8])
 
-#    def move(self,dir_choice):
-#        if dir_choice==0:
-#            y_agent -= 1
-#        elif dir_choice==1:
-#            y_agent += 1
-#        elif dir_choice==2:
-#            x_agent -= 1
-#        elif dir_choice==3:
-#            x_agent += 1
-#        else:
-#            print("I'm stuck")
-
     def act(self, state):
         if np.random.rand() <= self.epsilon:
             dir_choice = random.randrange(self.action_size)
@@ -125,11 +142,8 @@ if __name__ == "__main__":
     print("Entrance Coordinates")
     print(laby_env.x_entrance, laby_env.y_entrance)
 
-    cur_state = laby_env.get_state(laby_env.x_entrance+2, laby_env.y_entrance)
-    print(cur_state)
-
-    agent = DQNAgent(4,4)
-    #agent.init_Q()
+    agent = DQNAgent(laby_env.state_size, laby_env.action_size)
+    # agent.init_Q()
     agent.load("./models/model_after_Q_init.h5")
 
     np.set_printoptions(precision=3, suppress=True)
@@ -144,3 +158,29 @@ if __name__ == "__main__":
     print(agent.act(np.reshape([9, 0, 9, 0], [1, agent.state_size])))
     print(agent.act(np.reshape([0, 0, 9, 0], [1, agent.state_size])))
     print(agent.act(np.reshape([0, 0, 0, 0], [1, agent.state_size])))
+
+    done = False
+    batch_size = 64
+
+    cur_state = laby_env.get_state()
+    cur_state = np.reshape(cur_state, [1, agent.state_size])
+    print(cur_state)
+
+    steps = 0
+    while not done:
+        steps += 1
+        action = agent.act(cur_state)
+        next_state, reward, done = Env.step(action)
+        next_state = np.reshape(next_state, [1, agent.state_size])
+
+        agent.remember(cur_state, action, reward, next_state, done)
+        cur_state = next_state
+
+        if steps > 300:
+            done = True
+
+    print(len(agent.remember))
+    f = open("games/saved_games_dqn.txt", "a")
+    f.write(str(agent.remember))
+    f.write("\n")
+    f.close()
