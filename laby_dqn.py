@@ -6,7 +6,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras import backend as K
 
-EPISODES = 100
+EPISODES = 1000
 
 
 class Env:
@@ -122,6 +122,17 @@ class DQNAgent:
         #print(predicted_Q)
         #print(init_Q[:,4:8])
 
+    def print_Q(self):
+        with open('./models/init_Q.txt', 'r') as f:
+            loaded_Q = [line.replace('\n', '').split(',') for line in f]
+
+        loaded_Q = np.array(loaded_Q).astype(np.float)
+
+        print_Q = self.target_model.predict(loaded_Q[:, 0:4].astype(np.int))
+        np.set_printoptions(precision=3, suppress=True)
+        print(print_Q)
+        #print(init_Q[:,4:8])
+
     def act(self, state):
         if np.random.rand() <= self.epsilon:
             dir_choice = random.randrange(self.action_size)
@@ -143,6 +154,21 @@ class DQNAgent:
 
     def save(self, name):
         self.model.save_weights(name)
+
+    def replay(self, batch_size):
+        minibatch = random.sample(self.memory, batch_size)
+        for state, action, reward, next_state, done in minibatch:
+            target = self.model.predict(state)
+            if done:
+                target[0][action] = reward
+            else:
+                a = self.model.predict(next_state)[0]
+                t = self.target_model.predict(next_state)[0]
+                target[0][action] = reward + self.gamma * t[np.argmax(a)]
+            self.model.fit(state, target, epochs=1, verbose=0)
+
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
 
 
 if __name__ == "__main__":
@@ -176,8 +202,9 @@ if __name__ == "__main__":
 
         cur_state = laby_env.reset()
         cur_state = np.reshape(cur_state, [1, agent.state_size])
-        if EPISODES % 10 == 0:
+        if EPISODES % 100 == 0:
             print("episode: {}/{}".format(e, EPISODES))
+            agent.print_Q()
 
         steps = 0
         while not done:
@@ -192,6 +219,13 @@ if __name__ == "__main__":
 
             if steps > 300:
                 done = True
+
+            if done:
+                agent.update_target_model()
+                break
+
+        if len(agent.memory) > batch_size:
+            agent.replay(batch_size)
 
         f = open("games/saved_games_dqn.txt", "a")
         f.write(str(path))
