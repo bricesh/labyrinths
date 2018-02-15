@@ -64,6 +64,9 @@ class Env:
             exit_found = True
             reward = 10
 
+        if sum(state) == 27:
+            reward = .1
+
         return state, reward, exit_found
 
     def reset(self):
@@ -79,7 +82,7 @@ class DQNAgent:
         self.action_size = action_size
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95  # discount rate
-        self.epsilon = 0.5  # exploration rate
+        self.epsilon = 0.2  # exploration rate
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.99
         self.learning_rate = 0.001
@@ -129,7 +132,7 @@ class DQNAgent:
         loaded_Q = np.array(loaded_Q).astype(np.float)
 
         print_Q = self.target_model.predict(loaded_Q[:, 0:4].astype(np.int))
-        np.set_printoptions(precision=3, suppress=True)
+        np.set_printoptions(precision=2, suppress=True)
         print(print_Q)
         #print(init_Q[:,4:8])
 
@@ -202,7 +205,7 @@ if __name__ == "__main__":
 
         cur_state = laby_env.reset()
         cur_state = np.reshape(cur_state, [1, agent.state_size])
-        if EPISODES % 100 == 0:
+        if e % 100 == 0:
             print("episode: {}/{}".format(e, EPISODES))
             agent.print_Q()
 
@@ -225,9 +228,13 @@ if __name__ == "__main__":
                 break
 
         if len(agent.memory) > batch_size:
+            #print("start training...")
             agent.replay(batch_size)
+            #print("done training...")
 
         f = open("games/saved_games_dqn.txt", "a")
         f.write(str(path))
         f.write("\n")
         f.close()
+        if len(path) < 300:
+            print(len(path))
