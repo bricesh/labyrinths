@@ -6,7 +6,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras import backend as K
 
-EPISODES = 5000
+EPISODES = 100
 
 
 class Env:
@@ -167,20 +167,21 @@ if __name__ == "__main__":
     print(agent.act(np.reshape([0, 0, 9, 0], [1, agent.state_size])))
     print(agent.act(np.reshape([0, 0, 0, 0], [1, agent.state_size])))
 
-    done = False
     batch_size = 64
 
     for e in range(EPISODES):
-        # Define the path variable. Each cell is a tuple (x_pos, y_pos, up_val, down_val, left_val, right_val)
+        # Define the path variable. Each cell is a tuple (x_pos, y_pos)
         path = []
+        done = False
 
         cur_state = laby_env.reset()
         cur_state = np.reshape(cur_state, [1, agent.state_size])
-        print("episode: {}/{}".format(e, EPISODES))
+        if EPISODES % 10 == 0:
+            print("episode: {}/{}".format(e, EPISODES))
 
         steps = 0
         while not done:
-            path.append((Env.cur_x_pos, Env.cur_y_pos))
+            path.append((laby_env.cur_x_pos, laby_env.cur_y_pos))
             steps += 1
             action = agent.act(cur_state)
             next_state, reward, done = laby_env.step(action)
@@ -192,7 +193,7 @@ if __name__ == "__main__":
             if steps > 300:
                 done = True
 
-    f = open("games/saved_games_dqn.txt", "a")
-    f.write(str(path))
-    f.write("\n")
-    f.close()
+        f = open("games/saved_games_dqn.txt", "a")
+        f.write(str(path))
+        f.write("\n")
+        f.close()
